@@ -38,12 +38,13 @@ func (s *Service) AddURLs(urls []string) int {
 	return added
 }
 
-func (s *Service) SetPublicKeys(publicKeys []*PublicKey) {
+func (s *Service) SetPublicKeys(publicKeys []*PublicKey) int {
 	s.PublicKeys = []*PublicKey{}
-	s.AddPublicKeys(publicKeys)
+	return s.AddPublicKeys(publicKeys)
 }
 
-func (s *Service) AddPublicKeys(publicKeys []*PublicKey) {
+func (s *Service) AddPublicKeys(publicKeys []*PublicKey) int {
+	added := 0
 	for _, publicKey := range publicKeys {
 		idx, exists := s.publicKeyExists(publicKey)
 		if exists {
@@ -51,7 +52,9 @@ func (s *Service) AddPublicKeys(publicKeys []*PublicKey) {
 			continue
 		}
 		s.PublicKeys = append(s.PublicKeys, publicKey)
+		added++
 	}
+	return added
 }
 
 func (s *Service) SetValidator(v *validator.Validator) {
