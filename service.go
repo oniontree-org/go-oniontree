@@ -51,6 +51,10 @@ func (s *Service) AddPublicKeys(publicKeys []*PublicKey) {
 	}
 }
 
+func (s *Service) SetValidator(v *validator.Validator) {
+	s.validator = v
+}
+
 func (s *Service) Validate() error {
 	if s.validator == nil {
 		return nil
