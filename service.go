@@ -19,12 +19,13 @@ func (s *Service) ID() string {
 	return s.id
 }
 
-func (s *Service) SetURLs(urls []string) {
+func (s *Service) SetURLs(urls []string) int {
 	s.URLs = []string{}
-	s.AddURLs(urls)
+	return s.AddURLs(urls)
 }
 
-func (s *Service) AddURLs(urls []string) {
+func (s *Service) AddURLs(urls []string) int {
+	added := 0
 	for _, url := range urls {
 		url = strings.TrimSpace(url)
 		_, exists := s.urlExists(url)
@@ -32,7 +33,9 @@ func (s *Service) AddURLs(urls []string) {
 			continue
 		}
 		s.URLs = append(s.URLs, url)
+		added++
 	}
+	return added
 }
 
 func (s *Service) SetPublicKeys(publicKeys []*PublicKey) {
