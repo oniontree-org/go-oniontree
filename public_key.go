@@ -15,9 +15,9 @@ type PublicKey struct {
 	Value       string `json:"value" yaml:"value"`
 }
 
-func ParseKey(key []byte) (*PublicKey, error) {
-	keyClean := bytes.TrimLeftFunc(key, unicode.IsSpace)
-	el, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(keyClean))
+func NewPublicKey(b []byte) (*PublicKey, error) {
+	bClean := bytes.TrimLeftFunc(b, unicode.IsSpace)
+	el, err := openpgp.ReadArmoredKeyRing(bytes.NewReader(bClean))
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +30,7 @@ func ParseKey(key []byte) (*PublicKey, error) {
 		}
 		pk := e.PrimaryKey
 		publicKey = &PublicKey{
-			Value:       string(keyClean),
+			Value:       string(bClean),
 			ID:          pk.KeyIdString(),
 			Fingerprint: fmt.Sprintf("%X", pk.Fingerprint),
 			UserID:      userID,
