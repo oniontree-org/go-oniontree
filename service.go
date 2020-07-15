@@ -11,7 +11,7 @@ type Service struct {
 	URLs        []string     `json:"urls" yaml:"urls"`
 	PublicKeys  []*PublicKey `json:"public_keys,omitempty" yaml:"public_keys,omitempty"`
 
-	id string
+	id        string
 	validator *validator.Validator
 }
 
