@@ -13,7 +13,6 @@ import (
     "context"
     "github.com/onionltd/go-oniontree"
     "github.com/onionltd/go-oniontree/watcher"
-    "github.com/onionltd/go-oniontree/watcher/events"
 )
 
 func main() {
@@ -23,7 +22,7 @@ func main() {
     }
     w := watcher.NewWatcher(ot)
 
-    eventCh := make(chan events.Event)
+    eventCh := make(chan watcher.Event)
 
     go func(){
         if err := w.Watch(context.TODO(), eventCh); err != nil {
@@ -35,9 +34,9 @@ func main() {
         select {
         case e := <-eventCh:
             switch e.(type) {
-            case events.ServiceAdded:
+            case watcher.ServiceAdded:
                 fmt.Println("service added!")
-            case events.ServiceRemoved:
+            case watcher.ServiceRemoved:
                 fmt.Println("service removed!")
             }
         }
