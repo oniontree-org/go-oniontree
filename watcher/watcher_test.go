@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"github.com/onionltd/go-oniontree"
-	"github.com/onionltd/go-oniontree/watcher/events"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -31,7 +30,7 @@ func copyOnionTree(t *testing.T) (*oniontree.OnionTree, func() error) {
 	}
 }
 
-func mustEvent(t *testing.T, event events.Event, eventCh <-chan events.Event) {
+func mustEvent(t *testing.T, event Event, eventCh <-chan Event) {
 	select {
 	case e := <-eventCh:
 		if !assert.Equal(t, event, e) {
@@ -40,47 +39,47 @@ func mustEvent(t *testing.T, event events.Event, eventCh <-chan events.Event) {
 	}
 }
 
-func mustAddService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan events.Event) {
+func mustAddService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan Event) {
 	serviceID := "testservice"
 	serviceData := oniontree.NewService(serviceID)
 	if err := ot.AddService(serviceID, serviceData); err != nil {
 		t.Fatal(err)
 	}
 
-	mustEvent(t, events.ServiceAdded{
+	mustEvent(t, ServiceAdded{
 		ID: serviceID,
 	}, eventCh)
 
-	mustEvent(t, events.ServiceUpdated{
+	mustEvent(t, ServiceUpdated{
 		ID: serviceID,
 	}, eventCh)
 }
 
-func mustTagService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan events.Event) {
+func mustTagService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan Event) {
 	serviceID := "testservice"
 	tagName := "test"
 	if err := ot.TagService(serviceID, []string{tagName}); err != nil {
 		t.Fatal(err)
 	}
 
-	mustEvent(t, events.ServiceTagged{
+	mustEvent(t, ServiceTagged{
 		ID:  serviceID,
 		Tag: tagName,
 	}, eventCh)
 }
 
-func mustRemoveService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan events.Event) {
+func mustRemoveService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan Event) {
 	serviceID := "testservice"
 	if err := ot.RemoveService(serviceID); err != nil {
 		t.Fatal(err)
 	}
 
-	mustEvent(t, events.ServiceUntagged{
+	mustEvent(t, ServiceUntagged{
 		ID:  serviceID,
 		Tag: "test",
 	}, eventCh)
 
-	mustEvent(t, events.ServiceRemoved{
+	mustEvent(t, ServiceRemoved{
 		ID: serviceID,
 	}, eventCh)
 }
@@ -93,7 +92,7 @@ func TestWatcher_Watch(t *testing.T) {
 
 	w := NewWatcher(ot)
 
-	eventCh := make(chan events.Event)
+	eventCh := make(chan Event)
 	errCh := make(chan error)
 
 	ctx, cancel := context.WithCancel(context.Background())

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"github.com/onionltd/go-oniontree"
-	"github.com/onionltd/go-oniontree/watcher/events"
 	"path"
 	"path/filepath"
 	"strings"
@@ -17,7 +16,7 @@ type Watcher struct {
 
 func (w *Watcher) watchTagged(
 	ctx context.Context,
-	eventCh chan<- events.Event,
+	eventCh chan<- Event,
 ) error {
 	defer func() {
 		if r := recover(); r != nil {
@@ -27,17 +26,17 @@ func (w *Watcher) watchTagged(
 	filenameToTagName := func(f string) string {
 		return path.Base(f)
 	}
-	fsEventToTagEvent := func(e fsnotify.Event) events.Event {
+	fsEventToTagEvent := func(e fsnotify.Event) Event {
 		tagName := filenameToTagName(e.Name)
 		switch e.Op {
 		case fsnotify.Create:
-			return events.TagCreated{
+			return tagCreated{
 				Name: tagName,
 			}
 		}
 		return nil
 	}
-	emitEvent := func(e events.Event) {
+	emitEvent := func(e Event) {
 		select {
 		case eventCh <- e:
 		}
@@ -70,15 +69,15 @@ func (w *Watcher) watchTagged(
 
 func (w *Watcher) watchTags(
 	ctx context.Context,
-	taggedEventCh <-chan events.Event,
-	eventCh chan<- events.Event,
+	taggedEventCh <-chan Event,
+	eventCh chan<- Event,
 ) error {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("recovered: %s\n", r)
 		}
 	}()
-	emitEvent := func(e events.Event) {
+	emitEvent := func(e Event) {
 		select {
 		case eventCh <- e:
 		}
@@ -90,7 +89,7 @@ func (w *Watcher) watchTags(
 	filenameToTagName := func(f string) string {
 		return path.Base(path.Dir(f))
 	}
-	fsEventToServiceEvent := func(e fsnotify.Event) events.Event {
+	fsEventToServiceEvent := func(e fsnotify.Event) Event {
 		tagName := filenameToTagName(e.Name)
 		serviceID := filenameToServiceID(e.Name)
 		// If tag name is named "tagged", it means the tag directory itself
@@ -100,12 +99,12 @@ func (w *Watcher) watchTags(
 		}
 		switch e.Op {
 		case fsnotify.Create:
-			return events.ServiceTagged{
+			return ServiceTagged{
 				ID:  serviceID,
 				Tag: tagName,
 			}
 		case fsnotify.Remove:
-			return events.ServiceUntagged{
+			return ServiceUntagged{
 				ID:  serviceID,
 				Tag: tagName,
 			}
@@ -135,7 +134,7 @@ func (w *Watcher) watchTags(
 		select {
 		case e := <-taggedEventCh:
 			switch t := e.(type) {
-			case events.TagCreated:
+			case tagCreated:
 				// WARNING: There's a lingering race condition!
 				//
 				// If a service is tagged with a tag that didn't exist before,
@@ -159,7 +158,7 @@ func (w *Watcher) watchTags(
 				}
 
 				for i := range serviceIDs {
-					emitEvent(events.ServiceTagged{
+					emitEvent(ServiceTagged{
 						ID:  serviceIDs[i],
 						Tag: t.Name,
 					})
@@ -188,14 +187,14 @@ func (w *Watcher) watchTags(
 
 func (w *Watcher) watchUnsorted(
 	ctx context.Context,
-	eventCh chan<- events.Event,
+	eventCh chan<- Event,
 ) error {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("recovered: %s\n", r)
 		}
 	}()
-	emitEvent := func(e events.Event) {
+	emitEvent := func(e Event) {
 		select {
 		case eventCh <- e:
 		}
@@ -204,19 +203,19 @@ func (w *Watcher) watchUnsorted(
 		f = path.Base(f)
 		return strings.TrimSuffix(f, filepath.Ext(f))
 	}
-	fsEventToServiceEvent := func(e fsnotify.Event) events.Event {
+	fsEventToServiceEvent := func(e fsnotify.Event) Event {
 		serviceID := filenameToServiceID(e.Name)
 		switch e.Op {
 		case fsnotify.Create:
-			return events.ServiceAdded{
+			return ServiceAdded{
 				ID: serviceID,
 			}
 		case fsnotify.Remove:
-			return events.ServiceRemoved{
+			return ServiceRemoved{
 				ID: serviceID,
 			}
 		case fsnotify.Write:
-			return events.ServiceUpdated{
+			return ServiceUpdated{
 				ID: serviceID,
 			}
 		}
@@ -252,14 +251,14 @@ func (w *Watcher) watchUnsorted(
 // The call to Watch blocks until there's an error, or the context `ctx` is canceled.
 func (w *Watcher) Watch(
 	ctx context.Context,
-	eventCh chan<- events.Event,
+	eventCh chan<- Event,
 ) error {
 	ctx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	defer close(eventCh)
 
 	errCh := make(chan error, 3)
-	taggedEventCh := make(chan events.Event)
+	taggedEventCh := make(chan Event)
 
 	go func() {
 		if err := w.watchTagged(ctx, taggedEventCh); err != nil {
