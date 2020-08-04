@@ -15,14 +15,12 @@ import (
 )
 
 func main() {
-    s := scanner.NewScanner()
-    s.Start()
-    s.Events()
+    s := scanner.NewScanner(scanner.DefaultScannerConfig)
 
-    eventCh := make(chan events.Event)
+    eventCh := make(chan scanner.Event)
 
     go func(){
-        if err := w.Watch(context.TODO(), eventCh); err != nil {
+        if err := s.Start(context.TODO(), ".", eventCh); err != nil {
             panic(err)
         }
     }()
@@ -30,11 +28,9 @@ func main() {
     for {
         select {
         case e := <-eventCh:
-            switch e.(type) {
-            case events.ServiceAdded:
-                fmt.Println("service added!")
-            case events.ServiceRemoved:
-                fmt.Println("service removed!")
+            switch event := e.(type) {
+            case scanner.ScanEvent:
+                fmt.Printf("%+v\n", event)
             }
         }
     }
