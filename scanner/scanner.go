@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/onionltd/go-oniontree"
 	"github.com/onionltd/go-oniontree/watcher"
-	"github.com/onionltd/go-oniontree/watcher/events"
 	"golang.org/x/sync/semaphore"
 	"runtime/debug"
 	"time"
@@ -151,7 +150,7 @@ func (m *Scanner) Start(ctx context.Context, dir string, outputCh chan<- Event) 
 		}
 	}()
 
-	watcherEventCh := make(chan events.Event)
+	watcherEventCh := make(chan watcher.Event)
 	watcherErrCh := make(chan error, 1)
 
 	w := watcher.NewWatcher(ot)
@@ -169,22 +168,22 @@ func (m *Scanner) Start(ctx context.Context, dir string, outputCh chan<- Event) 
 			}
 
 			switch event := e.(type) {
-			case events.ServiceAdded:
+			case watcher.ServiceAdded:
 				startNewProcess(event.ID)
 
-			case events.ServiceUpdated:
+			case watcher.ServiceUpdated:
 				reloadRunningProcess(event.ID)
 
-			case events.ServiceRemoved:
+			case watcher.ServiceRemoved:
 				destroyRunningProcess(event.ID)
 
-			case events.ServiceTagged:
+			case watcher.ServiceTagged:
 				if event.Tag != "dead" {
 					continue
 				}
 				destroyRunningProcess(event.ID)
 
-			case events.ServiceUntagged:
+			case watcher.ServiceUntagged:
 				if event.Tag != "dead" {
 					continue
 				}

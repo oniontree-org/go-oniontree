@@ -14,10 +14,12 @@ type (
 	WorkerStarted struct {
 		URL string
 	}
+
 	WorkerStopped struct {
 		URL   string
 		Error error
 	}
+
 	workerStatus struct {
 		Status Status
 		URL    string
@@ -29,10 +31,12 @@ type (
 	ProcessStarted struct {
 		ServiceID string
 	}
+
 	ProcessStopped struct {
 		ServiceID string
 		Error     error
 	}
+
 	processStatus struct {
 		Status    Status
 		URL       string
