@@ -34,7 +34,7 @@ func copyOnionTree(t *testing.T) (*oniontree.OnionTree, func() error) {
 func mustEvent(t *testing.T, event events.Event, eventCh <-chan events.Event) {
 	select {
 	case e := <-eventCh:
-		if !assert.Equal(t, e, event) {
+		if !assert.Equal(t, event, e) {
 			t.Fatal("unexpected event")
 		}
 	}
