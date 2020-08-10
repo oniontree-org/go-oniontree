@@ -147,6 +147,8 @@ func (m *Scanner) Start(ctx context.Context, dir string, outputCh chan<- Event) 
 				emitEvent(event)
 			}
 		}
+
+		close(outputCh)
 	}()
 
 	watcherEventCh := make(chan watcher.Event)
