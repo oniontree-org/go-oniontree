@@ -7,7 +7,6 @@ import (
 	"github.com/onionltd/go-oniontree/watcher"
 	"golang.org/x/sync/semaphore"
 	"runtime/debug"
-	"time"
 )
 
 type ScannerConfig struct {
@@ -106,16 +105,15 @@ func (m *Scanner) Start(ctx context.Context, dir string, outputCh chan<- Event) 
 			return
 		}
 		procs[serviceID] = newProcess(m.ot, m.config.WorkerConfig)
-		emitEvent(ProcessStarted{
+		procsEventCh <- ProcessStarted{
 			ServiceID: serviceID,
-		})
+		}
 		go func() {
 			err := procs[serviceID].Start(pCtx, serviceID, procsEventCh)
-			emitEvent(ProcessStopped{
+			procsEventCh <- ProcessStopped{
 				ServiceID: serviceID,
 				Error:     err,
-			})
-			destroyRunningProcess(serviceID)
+			}
 		}()
 	}
 	reloadRunningProcess := func(serviceID string) {
@@ -140,12 +138,13 @@ func (m *Scanner) Start(ctx context.Context, dir string, outputCh chan<- Event) 
 		// Cancel context for all processes
 		pCtxCancel()
 
-		for {
+		for i := 0; i < len(procs); {
 			select {
 			case event := <-procsEventCh:
+				if _, ok := event.(ProcessStopped); ok {
+					i++
+				}
 				emitEvent(event)
-			case <-time.After(3 * time.Second):
-				return
 			}
 		}
 	}()
@@ -194,6 +193,9 @@ func (m *Scanner) Start(ctx context.Context, dir string, outputCh chan<- Event) 
 			return err
 
 		case event := <-procsEventCh:
+			if e, ok := event.(ProcessStopped); ok {
+				destroyRunningProcess(e.ServiceID)
+			}
 			emitEvent(event)
 
 		case <-ctx.Done():

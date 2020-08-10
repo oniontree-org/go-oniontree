@@ -29,7 +29,7 @@ var DefaultWorkerConfig = WorkerConfig{
 	PingRetryAttempts: 3,
 }
 
-func (w *Worker) Start(ctx context.Context, url string, outputCh chan<- workerStatus) error {
+func (w *Worker) Start(ctx context.Context, url string, outputCh chan<- Event) error {
 	ctx, w.cancel = context.WithCancel(ctx)
 
 	emitStatusEvent := func(err error) {

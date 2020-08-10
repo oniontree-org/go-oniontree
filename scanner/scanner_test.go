@@ -77,18 +77,18 @@ func TestScanner_Start(t *testing.T) {
 	// Cancel the context so we can check if the scanner shuts down cleanly.
 	cancel()
 
-	mustEvent(t, scanner.WorkerStopped{
-		URL:   "http://onions53ehmf4q75.onion",
-		Error: nil,
-	}, eventCh)
-	mustEvent(t, scanner.ProcessStopped{
-		ServiceID: "oniontree",
-	}, eventCh)
 	mustEvent(t, scanner.ScanEvent{
 		Status:    scanner.StatusOffline,
 		URL:       "http://onions53ehmf4q75.onion",
 		ServiceID: "oniontree",
 		Directory: ot.Dir(),
 		Error:     context.Canceled,
+	}, eventCh)
+	mustEvent(t, scanner.WorkerStopped{
+		URL:   "http://onions53ehmf4q75.onion",
+		Error: nil,
+	}, eventCh)
+	mustEvent(t, scanner.ProcessStopped{
+		ServiceID: "oniontree",
 	}, eventCh)
 }

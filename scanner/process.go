@@ -51,7 +51,7 @@ func (p *Process) Start(ctx context.Context, serviceID string, outputCh chan<- E
 	}
 
 	const workersChCapacity = 256
-	workersStatusCh := make(chan workerStatus, workersChCapacity)
+	workersEventCh := make(chan Event, workersChCapacity)
 
 	workers, err := loadWorkers()
 	if err != nil {
@@ -78,16 +78,15 @@ func (p *Process) Start(ctx context.Context, serviceID string, outputCh chan<- E
 			return
 		}
 		workers[url] = newWorker(p.workerConfig)
-		emitEvent(WorkerStarted{
+		workersEventCh <- WorkerStarted{
 			URL: url,
-		})
+		}
 		go func() {
-			err := workers[url].Start(wCtx, url, workersStatusCh)
-			emitEvent(WorkerStopped{
+			err := workers[url].Start(wCtx, url, workersEventCh)
+			workersEventCh <- WorkerStopped{
 				URL:   url,
 				Error: err,
-			})
-			destroyRunningWorker(url)
+			}
 		}()
 	}
 
@@ -107,9 +106,12 @@ func (p *Process) Start(ctx context.Context, serviceID string, outputCh chan<- E
 		// Cancel context for all workers
 		wCtxCancel()
 
-		for i := 0; i < len(workers)*2; i++ {
+		for i := 0; i < len(workers); {
 			select {
-			case event := <-workersStatusCh:
+			case event := <-workersEventCh:
+				if _, ok := event.(WorkerStopped); ok {
+					i++
+				}
 				emitEvent(event)
 			}
 		}
@@ -147,7 +149,10 @@ func (p *Process) Start(ctx context.Context, serviceID string, outputCh chan<- E
 			}
 
 		// Read from workers event channel and forward the data to the scanner.
-		case event := <-workersStatusCh:
+		case event := <-workersEventCh:
+			if e, ok := event.(WorkerStopped); ok {
+				destroyRunningWorker(e.URL)
+			}
 			emitEvent(event)
 
 		case <-ctx.Done():
