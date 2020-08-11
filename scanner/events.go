@@ -12,12 +12,14 @@ type ScanEvent struct {
 
 type (
 	WorkerStarted struct {
-		URL string
+		URL       string
+		ServiceID string
 	}
 
 	WorkerStopped struct {
-		URL   string
-		Error error
+		URL       string
+		ServiceID string
+		Error     error
 	}
 
 	workerStatus struct {

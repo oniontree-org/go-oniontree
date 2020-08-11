@@ -64,7 +64,8 @@ func TestScanner_Start(t *testing.T) {
 		ServiceID: "oniontree",
 	}, eventCh)
 	mustEvent(t, scanner.WorkerStarted{
-		URL: "http://onions53ehmf4q75.onion",
+		URL:       "http://onions53ehmf4q75.onion",
+		ServiceID: "oniontree",
 	}, eventCh)
 	mustEvent(t, scanner.ScanEvent{
 		Status:    scanner.StatusOnline,
@@ -85,8 +86,9 @@ func TestScanner_Start(t *testing.T) {
 		Error:     context.Canceled,
 	}, eventCh)
 	mustEvent(t, scanner.WorkerStopped{
-		URL:   "http://onions53ehmf4q75.onion",
-		Error: nil,
+		URL:       "http://onions53ehmf4q75.onion",
+		ServiceID: "oniontree",
+		Error:     nil,
 	}, eventCh)
 	mustEvent(t, scanner.ProcessStopped{
 		ServiceID: "oniontree",

@@ -79,13 +79,15 @@ func (p *Process) Start(ctx context.Context, serviceID string, outputCh chan<- E
 		}
 		workers[url] = newWorker(p.workerConfig)
 		workersEventCh <- WorkerStarted{
-			URL: url,
+			URL:       url,
+			ServiceID: serviceID,
 		}
 		go func() {
 			err := workers[url].Start(wCtx, url, workersEventCh)
 			workersEventCh <- WorkerStopped{
-				URL:   url,
-				Error: err,
+				URL:       url,
+				ServiceID: serviceID,
+				Error:     err,
 			}
 		}()
 	}
