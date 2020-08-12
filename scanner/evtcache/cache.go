@@ -13,6 +13,9 @@ type Cache struct {
 }
 
 func (c *Cache) ReadEvents(ctx context.Context, inputCh <-chan scanner.Event) error {
+	c.init()
+	defer c.uninit()
+
 	for {
 		select {
 		case event, more := <-inputCh:
@@ -51,6 +54,18 @@ func (c *Cache) GetOnlineAddresses(serviceID string) ([]string, bool) {
 		online = append(online, addr)
 	}
 	return online, ok
+}
+
+func (c *Cache) init() {
+	c.Lock()
+	c.addresses = make(map[string]map[string]scanner.Status)
+	c.Unlock()
+}
+
+func (c *Cache) uninit() {
+	c.Lock()
+	c.addresses = nil
+	c.Unlock()
 }
 
 func (c *Cache) deleteAddress(serviceID, address string) {
