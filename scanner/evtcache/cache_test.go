@@ -69,6 +69,15 @@ func TestCache_ReadEvents(t *testing.T) {
 		if !assert.Equal(t, []string{addresses[0]}, onlineAddrs) {
 			t.Fatal("invalid online addresses returned")
 		}
+
+		id, ok := cache.GetServiceID(addresses[0])
+		if !assert.True(t, ok) {
+			t.Fatal("url not found")
+		}
+
+		if !assert.Equal(t, serviceID, id) {
+			t.Fatal("invalid service id returned")
+		}
 	}()
 
 	//
@@ -100,6 +109,15 @@ func TestCache_ReadEvents(t *testing.T) {
 
 		if !assert.Equal(t, []string{addresses[0], addresses[1]}, onlineAddrs) {
 			t.Fatal("invalid online addresses returned")
+		}
+
+		id, ok := cache.GetServiceID(addresses[1])
+		if !assert.True(t, ok) {
+			t.Fatal("url not found")
+		}
+
+		if !assert.Equal(t, serviceID, id) {
+			t.Fatal("invalid service id returned")
 		}
 	}()
 
@@ -133,6 +151,15 @@ func TestCache_ReadEvents(t *testing.T) {
 		if !assert.Equal(t, []string{addresses[1]}, onlineAddrs) {
 			t.Fatal("invalid online addresses returned")
 		}
+
+		id, ok := cache.GetServiceID(addresses[0])
+		if !assert.True(t, ok) {
+			t.Fatal("url not found")
+		}
+
+		if !assert.Equal(t, serviceID, id) {
+			t.Fatal("invalid service id returned")
+		}
 	}()
 
 	//
@@ -165,6 +192,15 @@ func TestCache_ReadEvents(t *testing.T) {
 		if !assert.Equal(t, []string{}, onlineAddrs) {
 			t.Fatal("invalid online addresses returned")
 		}
+
+		id, ok := cache.GetServiceID(addresses[1])
+		if !assert.True(t, ok) {
+			t.Fatal("url not found")
+		}
+
+		if !assert.Equal(t, serviceID, id) {
+			t.Fatal("invalid service id returned")
+		}
 	}()
 
 	//
@@ -186,6 +222,11 @@ func TestCache_ReadEvents(t *testing.T) {
 		}, addrs) {
 			t.Fatal("invalid addresses returned")
 		}
+
+		_, ok = cache.GetServiceID(addresses[0])
+		if !assert.False(t, ok) {
+			t.Fatal("url found, but it should not")
+		}
 	}()
 
 	//
@@ -204,6 +245,11 @@ func TestCache_ReadEvents(t *testing.T) {
 
 		if !assert.Equal(t, map[string]scanner.Status{}, addrs) {
 			t.Fatal("invalid addresses returned")
+		}
+
+		_, ok = cache.GetServiceID(addresses[1])
+		if !assert.False(t, ok) {
+			t.Fatal("url found, but it should not")
 		}
 	}()
 

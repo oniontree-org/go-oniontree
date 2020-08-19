@@ -10,6 +10,8 @@ type Cache struct {
 	sync.RWMutex
 	// Format: addresses[serviceID][address] = status
 	addresses map[string]map[string]scanner.Status
+	// Format: services[address]serviceID
+	services map[string]string
 }
 
 func (c *Cache) ReadEvents(ctx context.Context, inputCh <-chan scanner.Event) error {
@@ -40,6 +42,10 @@ func (c *Cache) ReadEvents(ctx context.Context, inputCh <-chan scanner.Event) er
 	}
 }
 
+func (c *Cache) GetServiceID(url string) (string, bool) {
+	return c.getServiceID(url)
+}
+
 func (c *Cache) GetAddresses(serviceID string) (map[string]scanner.Status, bool) {
 	return c.getAddresses(serviceID)
 }
@@ -59,12 +65,14 @@ func (c *Cache) GetOnlineAddresses(serviceID string) ([]string, bool) {
 func (c *Cache) init() {
 	c.Lock()
 	c.addresses = make(map[string]map[string]scanner.Status)
+	c.services = make(map[string]string)
 	c.Unlock()
 }
 
 func (c *Cache) uninit() {
 	c.Lock()
 	c.addresses = nil
+	c.services = nil
 	c.Unlock()
 }
 
@@ -73,6 +81,7 @@ func (c *Cache) deleteAddress(serviceID, address string) {
 	if _, ok := c.addresses[serviceID]; ok {
 		delete(c.addresses[serviceID], address)
 	}
+	delete(c.services, address)
 	c.Unlock()
 }
 
@@ -88,6 +97,7 @@ func (c *Cache) addAddress(serviceID, address string, status scanner.Status) {
 		c.addresses[serviceID] = make(map[string]scanner.Status)
 	}
 	c.addresses[serviceID][address] = status
+	c.services[address] = serviceID
 	c.Unlock()
 }
 
@@ -95,5 +105,12 @@ func (c *Cache) getAddresses(serviceID string) (map[string]scanner.Status, bool)
 	c.RLock()
 	defer c.RUnlock()
 	v, ok := c.addresses[serviceID]
+	return v, ok
+}
+
+func (c *Cache) getServiceID(url string) (string, bool) {
+	c.RLock()
+	defer c.RUnlock()
+	v, ok := c.services[url]
 	return v, ok
 }
