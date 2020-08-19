@@ -77,7 +77,13 @@ func (o OnionTree) RemoveService(id string) error {
 		return err
 	}
 	pth := path.Join(o.UnsortedDir(), o.idToFilename(id))
-	return os.Remove(pth)
+	if err := os.Remove(pth); err != nil {
+		if os.IsNotExist(err) {
+			return ErrIdNotExists
+		}
+		return err
+	}
+	return nil
 }
 
 // Update updates existing service `id` with new data from `s`.
