@@ -42,7 +42,7 @@ func mustEvent(t *testing.T, event Event, eventCh <-chan Event) {
 func mustAddService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan Event) {
 	serviceID := "testservice"
 	serviceData := oniontree.NewService(serviceID)
-	if err := ot.AddService(serviceID, serviceData); err != nil {
+	if err := ot.AddService(serviceData); err != nil {
 		t.Fatal(err)
 	}
 

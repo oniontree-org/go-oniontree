@@ -41,7 +41,7 @@ func readServiceFile(t *testing.T, ot *oniontree.OnionTree, id string) *oniontre
 		t.Fatal(err)
 	}
 
-	serviceData := &oniontree.Service{}
+	serviceData := oniontree.NewService(id)
 
 	if err := yaml.Unmarshal(bytes, &serviceData); err != nil {
 		t.Fatal(err)
@@ -75,13 +75,12 @@ func TestOnionTree_AddService(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "dummyservice"
-	serviceData := &oniontree.Service{
-		Name:        "Dummy Service",
-		Description: "Describe the service",
-		URLs:        []string{"http://first.onion", "http://second.onion"},
-	}
+	serviceData := oniontree.NewService(serviceID)
+	serviceData.Name = "Dummy Service"
+	serviceData.Description = "Describe the service"
+	serviceData.URLs = []string{"http://first.onion", "http://second.onion"}
 
-	if err := ot.AddService(serviceID, serviceData); err != nil {
+	if err := ot.AddService(serviceData); err != nil {
 		t.Fatal(err)
 	}
 
@@ -100,15 +99,30 @@ func TestOnionTree_AddServiceErrorExists(t *testing.T) {
 	ot, cleanup := copyOnionTree(t)
 	defer cleanup()
 
-	serviceID := "oniontree"
-	serviceData := &oniontree.Service{
-		Name:        "Dummy Service",
-		Description: "Describe the service",
-		URLs:        []string{"http://first.onion", "http://second.onion"},
+	serviceData := oniontree.NewService("oniontree")
+
+	if err := ot.AddService(serviceData); err != oniontree.ErrIdExists {
+		t.Fatal("service added even though it already existed")
+	}
+}
+
+func TestOnionTree_AddServiceErrorInvalidID(t *testing.T) {
+	ot, cleanup := copyOnionTree(t)
+	defer cleanup()
+
+	invalidIDs := []string{
+		"",
+		"Dummyservice",
+		"dummy_service",
+		"dummy service",
 	}
 
-	if err := ot.AddService(serviceID, serviceData); err != oniontree.ErrIdExists {
-		t.Fatal("service added even though it already existed")
+	for _, id := range invalidIDs {
+		serviceData := oniontree.NewService(id)
+
+		if err := ot.AddService(serviceData); err != oniontree.ErrInvalidID {
+			t.Fatal("service added even though its ID is invalid")
+		}
 	}
 }
 
@@ -135,13 +149,12 @@ func TestOnionTree_UpdateService(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "oniontree"
-	serviceData := &oniontree.Service{
-		Name:        "Dummy Service",
-		Description: "Describe the service",
-		URLs:        []string{},
-	}
+	serviceData := oniontree.NewService(serviceID)
+	serviceData.Name = "Dummy Service"
+	serviceData.Description = "Describe the service"
+	serviceData.URLs = []string{}
 
-	if err := ot.UpdateService(serviceID, serviceData); err != nil {
+	if err := ot.UpdateService(serviceData); err != nil {
 		t.Fatal(err)
 	}
 
@@ -156,14 +169,9 @@ func TestOnionTree_UpdateServiceErrorNotExists(t *testing.T) {
 	ot, cleanup := copyOnionTree(t)
 	defer cleanup()
 
-	serviceID := "dummyservice"
-	serviceData := &oniontree.Service{
-		Name:        "Dummy Service",
-		Description: "Describe the service",
-		URLs:        []string{},
-	}
+	serviceData := oniontree.NewService("dummyservice")
 
-	if err := ot.UpdateService(serviceID, serviceData); err != oniontree.ErrIdNotExists {
+	if err := ot.UpdateService(serviceData); err != oniontree.ErrIdNotExists {
 		t.Fatal(err)
 	}
 }

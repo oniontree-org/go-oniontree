@@ -44,11 +44,11 @@ func (o OnionTree) Init() error {
 }
 
 // Add adds a new service `id` to the repository with data from `s`.
-func (o OnionTree) AddService(id string, s *Service) error {
+func (o OnionTree) AddService(s *Service) error {
 	if err := s.Validate(); err != nil {
 		return err
 	}
-	pth := path.Join(o.UnsortedDir(), o.idToFilename(id))
+	pth := path.Join(o.UnsortedDir(), o.idToFilename(s.ID()))
 	file, err := os.OpenFile(pth, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0666)
 	if err != nil {
 		if os.IsExist(err) {
@@ -87,11 +87,11 @@ func (o OnionTree) RemoveService(id string) error {
 }
 
 // Update updates existing service `id` with new data from `s`.
-func (o OnionTree) UpdateService(id string, s *Service) error {
+func (o OnionTree) UpdateService(s *Service) error {
 	if err := s.Validate(); err != nil {
 		return err
 	}
-	pth := path.Join(o.UnsortedDir(), o.idToFilename(id))
+	pth := path.Join(o.UnsortedDir(), o.idToFilename(s.ID()))
 	file, err := os.OpenFile(pth, os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		if os.IsNotExist(err) {

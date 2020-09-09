@@ -1,9 +1,26 @@
 package oniontree
 
 import (
+	"errors"
 	"github.com/onionltd/go-oniontree/validator"
+	"regexp"
 	"strings"
 )
+
+var ErrInvalidID = errors.New("invalid id")
+
+type ID string
+
+func (i ID) Validate() error {
+	matched, err := regexp.MatchString(`^[a-z0-9\-]+$`, string(i))
+	if err != nil {
+		return err
+	}
+	if !matched {
+		return ErrInvalidID
+	}
+	return nil
+}
 
 type Service struct {
 	Name        string       `json:"name" yaml:"name"`
@@ -11,12 +28,12 @@ type Service struct {
 	URLs        []string     `json:"urls" yaml:"urls"`
 	PublicKeys  []*PublicKey `json:"public_keys,omitempty" yaml:"public_keys,omitempty"`
 
-	id        string
+	id        ID
 	validator *validator.Validator
 }
 
 func (s *Service) ID() string {
-	return s.id
+	return string(s.id)
 }
 
 func (s *Service) SetURLs(urls []string) int {
@@ -62,10 +79,13 @@ func (s *Service) SetValidator(v *validator.Validator) {
 }
 
 func (s *Service) Validate() error {
-	if s.validator == nil {
-		return nil
+	if err := s.id.Validate(); err != nil {
+		return err
 	}
-	return s.validator.Validate(s)
+	if s.validator != nil {
+		return s.validator.Validate(s)
+	}
+	return nil
 }
 
 func (s Service) urlExists(url string) (int, bool) {
@@ -91,7 +111,7 @@ func (s Service) publicKeyExists(publicKey *PublicKey) (int, bool) {
 
 func NewService(id string) *Service {
 	return &Service{
-		id: id,
+		id: ID(id),
 	}
 }
 
