@@ -2,6 +2,7 @@ package oniontree
 
 import (
 	"github.com/onionltd/go-oniontree/validator"
+	"github.com/onionltd/go-oniontree/validator/jsonschema"
 	"regexp"
 	"strings"
 )
@@ -72,10 +73,6 @@ func (s *Service) AddPublicKeys(publicKeys []*PublicKey) int {
 	return added
 }
 
-func (s *Service) SetValidator(v *validator.Validator) {
-	s.validator = v
-}
-
 func (s *Service) Validate() error {
 	if err := s.id.Validate(); err != nil {
 		return err
@@ -109,12 +106,7 @@ func (s Service) publicKeyExists(publicKey *PublicKey) (int, bool) {
 
 func NewService(id string) *Service {
 	return &Service{
-		id: ID(id),
+		id:        ID(id),
+		validator: validator.NewValidator(jsonschema.V0),
 	}
-}
-
-func NewServiceWithValidator(id string, v *validator.Validator) *Service {
-	s := NewService(id)
-	s.validator = v
-	return s
 }

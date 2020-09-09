@@ -41,13 +41,13 @@ func readServiceFile(t *testing.T, ot *oniontree.OnionTree, id string) *oniontre
 		t.Fatal(err)
 	}
 
-	serviceData := oniontree.NewService(id)
+	service := oniontree.NewService(id)
 
-	if err := yaml.Unmarshal(bytes, &serviceData); err != nil {
+	if err := yaml.Unmarshal(bytes, &service); err != nil {
 		t.Fatal(err)
 	}
 
-	return serviceData
+	return service
 }
 
 func TestOnionTree_Init(t *testing.T) {
@@ -75,12 +75,12 @@ func TestOnionTree_AddService(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "dummyservice"
-	serviceData := oniontree.NewService(serviceID)
-	serviceData.Name = "Dummy Service"
-	serviceData.Description = "Describe the service"
-	serviceData.URLs = []string{"http://first.onion", "http://second.onion"}
+	service := oniontree.NewService(serviceID)
+	service.Name = "Dummy Service"
+	service.Description = "Describe the service"
+	service.URLs = []string{"http://first.onion", "http://second.onion"}
 
-	if err := ot.AddService(serviceData); err != nil {
+	if err := ot.AddService(service); err != nil {
 		t.Fatal(err)
 	}
 
@@ -88,9 +88,9 @@ func TestOnionTree_AddService(t *testing.T) {
 		t.Fatal("file 'dummyservice.yaml' not exists")
 	}
 
-	serviceDataResult := readServiceFile(t, ot, serviceID)
+	serviceResult := readServiceFile(t, ot, serviceID)
 
-	if !assert.Equal(t, serviceData, serviceDataResult) {
+	if !assert.Equal(t, service, serviceResult) {
 		t.Fatal("saved data do not match")
 	}
 }
@@ -99,11 +99,17 @@ func TestOnionTree_AddServiceErrorExists(t *testing.T) {
 	ot, cleanup := copyOnionTree(t)
 	defer cleanup()
 
-	serviceData := oniontree.NewService("oniontree")
+	service := oniontree.NewService("oniontree")
+	service.Name = "OnionTree"
+	service.SetURLs([]string{"http://onions53ehmf4q75.onion"})
 
-	err := ot.AddService(serviceData)
+	err := ot.AddService(service)
 	if _, ok := err.(*oniontree.ErrIdExists); !ok {
-		t.Fatal("service added even though it already existed")
+		if err == nil {
+			t.Fatal("service added even though it already existed")
+		} else {
+			t.Fatal("unexpected error", err.Error())
+		}
 	}
 }
 
@@ -119,11 +125,15 @@ func TestOnionTree_AddServiceErrorInvalidID(t *testing.T) {
 	}
 
 	for _, id := range invalidIDs {
-		serviceData := oniontree.NewService(id)
+		service := oniontree.NewService(id)
 
-		err := ot.AddService(serviceData)
+		err := ot.AddService(service)
 		if _, ok := err.(*oniontree.ErrInvalidID); !ok {
-			t.Fatal("service added even though its ID is invalid")
+			if err == nil {
+				t.Fatal("service added even though its ID is invalid")
+			} else {
+				t.Fatal("unexpected error", err.Error())
+			}
 		}
 	}
 }
@@ -151,18 +161,19 @@ func TestOnionTree_UpdateService(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "oniontree"
-	serviceData := oniontree.NewService(serviceID)
-	serviceData.Name = "Dummy Service"
-	serviceData.Description = "Describe the service"
-	serviceData.URLs = []string{}
+	service, err := ot.GetService(serviceID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service.Name = "OnionTree [RENAMED]"
 
-	if err := ot.UpdateService(serviceData); err != nil {
+	if err := ot.UpdateService(service); err != nil {
 		t.Fatal(err)
 	}
 
-	serviceDataResult := readServiceFile(t, ot, serviceID)
+	serviceResult := readServiceFile(t, ot, serviceID)
 
-	if !assert.Equal(t, serviceData, serviceDataResult) {
+	if !assert.Equal(t, service, serviceResult) {
 		t.Fatal("saved data do not match")
 	}
 }
@@ -171,11 +182,17 @@ func TestOnionTree_UpdateServiceErrorNotExists(t *testing.T) {
 	ot, cleanup := copyOnionTree(t)
 	defer cleanup()
 
-	serviceData := oniontree.NewService("dummyservice")
+	service := oniontree.NewService("dummyservice")
+	service.Name = "Dummy Service"
+	service.SetURLs([]string{"http://onions53ehmf4q75.onion"})
 
-	err := ot.UpdateService(serviceData)
-	if e, ok := err.(*oniontree.ErrIdNotExists); !ok {
-		t.Fatal(e)
+	err := ot.UpdateService(service)
+	if _, ok := err.(*oniontree.ErrIdNotExists); !ok {
+		if err == nil {
+			t.Fatal("service updated even though id does not exist")
+		} else {
+			t.Fatal("unexpected error", err.Error())
+		}
 	}
 }
 
@@ -184,11 +201,11 @@ func TestOnionTree_GetService(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "oniontree"
-	serviceData := oniontree.NewService(serviceID)
-	serviceData.Name = "OnionTree"
-	serviceData.Description = "OnionTree is an open source repository of Tor hidden services."
-	serviceData.URLs = []string{"http://onions53ehmf4q75.onion"}
-	serviceData.PublicKeys = []*oniontree.PublicKey{
+	service := oniontree.NewService(serviceID)
+	service.Name = "OnionTree"
+	service.Description = "OnionTree is an open source repository of Tor hidden services."
+	service.URLs = []string{"http://onions53ehmf4q75.onion"}
+	service.PublicKeys = []*oniontree.PublicKey{
 		{
 			ID:          "E4B6CAC49B242A44",
 			UserID:      "Onion Limited <onionltd@protonmail.com>",
@@ -283,12 +300,12 @@ YIyxlDV09WBqcGI8Ryv9SW+HtjU7NfmKBEXyb29J67rvANN02KbobA==
 		},
 	}
 
-	serviceDataResult, err := ot.GetService(serviceID)
+	serviceResult, err := ot.GetService(serviceID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !assert.Equal(t, serviceData, serviceDataResult) {
+	if !assert.Equal(t, service, serviceResult) {
 		t.Fatal(err)
 	}
 }
