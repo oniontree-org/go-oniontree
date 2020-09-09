@@ -41,11 +41,18 @@ func (s *Service) SetURLs(urls []string) int {
 }
 
 func (s *Service) AddURLs(urls []string) int {
+	urlExists := func(url string) bool {
+		for idx, _ := range s.URLs {
+			if s.URLs[idx] == url {
+				return true
+			}
+		}
+		return false
+	}
 	added := 0
 	for _, url := range urls {
 		url = strings.TrimSpace(url)
-		_, exists := s.urlExists(url)
-		if exists {
+		if urlExists(url) {
 			continue
 		}
 		s.URLs = append(s.URLs, url)
@@ -60,11 +67,20 @@ func (s *Service) SetPublicKeys(publicKeys []*PublicKey) int {
 }
 
 func (s *Service) AddPublicKeys(publicKeys []*PublicKey) int {
+	publicKeyExists := func(publicKey *PublicKey) bool {
+		for idx, _ := range s.PublicKeys {
+			if s.PublicKeys[idx].Fingerprint == "" && s.PublicKeys[idx].ID == "" {
+				continue
+			}
+			if s.PublicKeys[idx].Fingerprint == publicKey.Fingerprint || s.PublicKeys[idx].ID == publicKey.ID {
+				return true
+			}
+		}
+		return false
+	}
 	added := 0
 	for _, publicKey := range publicKeys {
-		idx, exists := s.publicKeyExists(publicKey)
-		if exists {
-			s.PublicKeys[idx] = publicKey
+		if publicKeyExists(publicKey) {
 			continue
 		}
 		s.PublicKeys = append(s.PublicKeys, publicKey)
@@ -81,27 +97,6 @@ func (s *Service) Validate() error {
 		return s.validator.Validate(s)
 	}
 	return nil
-}
-
-func (s Service) urlExists(url string) (int, bool) {
-	for idx, _ := range s.URLs {
-		if s.URLs[idx] == url {
-			return idx, true
-		}
-	}
-	return -1, false
-}
-
-func (s Service) publicKeyExists(publicKey *PublicKey) (int, bool) {
-	for idx, _ := range s.PublicKeys {
-		if s.PublicKeys[idx].Fingerprint == "" && s.PublicKeys[idx].ID == "" {
-			continue
-		}
-		if s.PublicKeys[idx].Fingerprint == publicKey.Fingerprint || s.PublicKeys[idx].ID == publicKey.ID {
-			return idx, true
-		}
-	}
-	return -1, false
 }
 
 func NewService(id string) *Service {
