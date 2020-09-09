@@ -7,7 +7,7 @@ type ErrNotOnionTree struct {
 }
 
 func (e *ErrNotOnionTree) Error() string {
-	return fmt.Sprintf("oniontree: directory `%s` is not an OnionTree repository", e.dir)
+	return fmt.Sprintf("directory `%s` is not an OnionTree repository", e.dir)
 }
 
 type ErrIdExists struct {
@@ -15,7 +15,7 @@ type ErrIdExists struct {
 }
 
 func (e *ErrIdExists) Error() string {
-	return fmt.Sprintf("oniontree: service with ID `%s` already exists", e.id)
+	return fmt.Sprintf("service with ID `%s` already exists", e.id)
 }
 
 type ErrIdNotExists struct {
@@ -23,7 +23,7 @@ type ErrIdNotExists struct {
 }
 
 func (e *ErrIdNotExists) Error() string {
-	return fmt.Sprintf("oniontree: service with ID `%s` does not exist", e.id)
+	return fmt.Sprintf("service with ID `%s` does not exist", e.id)
 }
 
 type ErrTagNotExists struct {
@@ -31,7 +31,7 @@ type ErrTagNotExists struct {
 }
 
 func (e *ErrTagNotExists) Error() string {
-	return fmt.Sprintf("oniontree: tag with name `%s` does not exist", e.name)
+	return fmt.Sprintf("tag with name `%s` does not exist", e.name)
 }
 
 type ErrInvalidID struct {
@@ -40,5 +40,5 @@ type ErrInvalidID struct {
 }
 
 func (e *ErrInvalidID) Error() string {
-	return fmt.Sprintf("oniontree: service ID `%s` does not match the pattern \"%s\"", e.id, e.pattern)
+	return fmt.Sprintf("service ID `%s` does not match the pattern \"%s\"", e.id, e.pattern)
 }
