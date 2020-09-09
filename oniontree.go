@@ -35,7 +35,7 @@ func (o OnionTree) Init() error {
 	return cairnFile.Close()
 }
 
-// Add adds a new service `id` to the repository with data from `s`.
+// Add adds a new service to the repository with data from `s`.
 func (o OnionTree) AddService(s *Service) error {
 	if err := s.Validate(); err != nil {
 		return err
@@ -78,7 +78,7 @@ func (o OnionTree) RemoveService(id string) error {
 	return nil
 }
 
-// Update updates existing service `id` with new data from `s`.
+// Update replaces existing service with new data from `s`.
 func (o OnionTree) UpdateService(s *Service) error {
 	if err := s.Validate(); err != nil {
 		return err
