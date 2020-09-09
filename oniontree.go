@@ -159,13 +159,13 @@ func (o OnionTree) ListServices() ([]string, error) {
 	return files, nil
 }
 
-// ListServicesWithTag returns a list of services tagged with `id`.
-func (o OnionTree) ListServicesWithTag(id string) ([]string, error) {
-	pth := path.Join(o.TaggedDir(), id)
+// ListServicesWithTag returns a list of services tagged with `tag`.
+func (o OnionTree) ListServicesWithTag(tag Tag) ([]string, error) {
+	pth := path.Join(o.TaggedDir(), tag.String())
 	file, err := os.Open(pth)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, &ErrTagNotExists{id}
+			return nil, &ErrTagNotExists{tag}
 		}
 		return nil, err
 	}
@@ -182,7 +182,7 @@ func (o OnionTree) ListServicesWithTag(id string) ([]string, error) {
 }
 
 // ListTags returns a list of tags found in the repository.
-func (o OnionTree) ListTags() ([]string, error) {
+func (o OnionTree) ListTags() ([]Tag, error) {
 	file, err := os.Open(o.TaggedDir())
 	if err != nil {
 		return nil, err
@@ -193,14 +193,18 @@ func (o OnionTree) ListTags() ([]string, error) {
 		return nil, err
 	}
 	sort.Strings(files)
-	return files, nil
+	tags := make([]Tag, len(files))
+	for i := range files {
+		tags[i] = Tag(files[i])
+	}
+	return tags, nil
 }
 
 // ListServiceTags returns tags of service `id`.
 // NOTICE: This function is very inefficient as it has to scale down the
 // tagged directory recursively to find all symbolic links matching a pattern.
-func (o OnionTree) ListServiceTags(id string) ([]string, error) {
-	matching := []string{}
+func (o OnionTree) ListServiceTags(id string) ([]Tag, error) {
+	matching := []Tag{}
 	tags, err := o.ListTags()
 	if err != nil {
 		return nil, err
@@ -221,15 +225,17 @@ func (o OnionTree) ListServiceTags(id string) ([]string, error) {
 }
 
 // TagService adds tags `tags` to service `id`.
-func (o OnionTree) TagService(id string, tags []string) error {
+func (o OnionTree) TagService(id string, tags []Tag) error {
 	for _, tag := range tags {
-		tag = strings.TrimSpace(tag)
+		if err := tag.Validate(); err != nil {
+			return err
+		}
 		filename := o.idToFilename(id)
 		pth := path.Join(o.UnsortedDir(), filename)
 		if !isFile(pth) {
 			return &ErrIdNotExists{id}
 		}
-		pthTag := path.Join(o.TaggedDir(), tag)
+		pthTag := path.Join(o.TaggedDir(), tag.String())
 		// Create tag directory, ignore error if it already exists.
 		if err := os.Mkdir(pthTag, 0755); err != nil {
 			if !os.IsExist(err) {
@@ -251,15 +257,14 @@ func (o OnionTree) TagService(id string, tags []string) error {
 }
 
 // UntagService removes tags `tags` from service `id`.
-func (o OnionTree) UntagService(id string, tags []string) error {
+func (o OnionTree) UntagService(id string, tags []Tag) error {
 	for _, tag := range tags {
-		tag = strings.TrimSpace(tag)
 		filename := o.idToFilename(id)
 		pth := path.Join(o.UnsortedDir(), filename)
 		if !isFile(pth) {
 			return &ErrIdNotExists{id}
 		}
-		pthTag := path.Join(o.TaggedDir(), tag)
+		pthTag := path.Join(o.TaggedDir(), tag.String())
 		pthLink := path.Join(pthTag, filename)
 		if isSymlink(pthLink) {
 			if err := os.Remove(pthLink); err != nil {

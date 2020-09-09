@@ -124,7 +124,7 @@ func (w *Watcher) watchTags(
 	}
 
 	for i := range tags {
-		pth := path.Join(w.ot.TaggedDir(), tags[i])
+		pth := path.Join(w.ot.TaggedDir(), tags[i].String())
 		if err := tagsWatcher.Add(pth); err != nil {
 			return err
 		}
@@ -152,7 +152,7 @@ func (w *Watcher) watchTags(
 				//
 				// * Emitted duplicate ServiceTagged events.
 				// * Lost ServiceTagged event.
-				serviceIDs, err := w.ot.ListServicesWithTag(t.Name)
+				serviceIDs, err := w.ot.ListServicesWithTag(oniontree.Tag(t.Name))
 				if err != nil {
 					return err
 				}

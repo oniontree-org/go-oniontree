@@ -27,11 +27,11 @@ func (e *ErrIdNotExists) Error() string {
 }
 
 type ErrTagNotExists struct {
-	name string
+	tag Tag
 }
 
 func (e *ErrTagNotExists) Error() string {
-	return fmt.Sprintf("tag with name `%s` does not exist", e.name)
+	return fmt.Sprintf("tag with name `%s` does not exist", e.tag)
 }
 
 type ErrInvalidID struct {
@@ -41,4 +41,13 @@ type ErrInvalidID struct {
 
 func (e *ErrInvalidID) Error() string {
 	return fmt.Sprintf("service ID `%s` does not match the pattern \"%s\"", e.id, e.pattern)
+}
+
+type ErrInvalidTagName struct {
+	name    string
+	pattern string
+}
+
+func (e *ErrInvalidTagName) Error() string {
+	return fmt.Sprintf("tag name `%s` does not match the pattern \"%s\"", e.name, e.pattern)
 }

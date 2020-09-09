@@ -330,10 +330,10 @@ func TestOnionTree_ListServicesWithTag(t *testing.T) {
 	ot, cleanup := copyOnionTree(t)
 	defer cleanup()
 
-	tagName := "link_list"
+	tag := oniontree.Tag("link_list")
 	serviceIDs := []string{"oniontree"}
 
-	serviceIDsResult, err := ot.ListServicesWithTag(tagName)
+	serviceIDsResult, err := ot.ListServicesWithTag(tag)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -347,14 +347,14 @@ func TestOnionTree_ListTags(t *testing.T) {
 	ot, cleanup := copyOnionTree(t)
 	defer cleanup()
 
-	tagNames := []string{"link_list"}
+	tagsExpected := []oniontree.Tag{"link_list"}
 
-	tagNamesResult, err := ot.ListTags()
+	tagsActual, err := ot.ListTags()
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !assert.Equal(t, tagNames, tagNamesResult) {
+	if !assert.Equal(t, tagsExpected, tagsActual) {
 		t.Fatal(err)
 	}
 }
@@ -364,14 +364,14 @@ func TestOnionTree_ListServiceTags(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "oniontree"
-	tagNames := []string{"link_list"}
+	tagsExpected := []oniontree.Tag{"link_list"}
 
-	tagNamesResult, err := ot.ListServiceTags(serviceID)
+	tagsActual, err := ot.ListServiceTags(serviceID)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if !assert.Equal(t, tagNames, tagNamesResult) {
+	if !assert.Equal(t, tagsExpected, tagsActual) {
 		t.Fatal(err)
 	}
 }
@@ -381,14 +381,31 @@ func TestOnionTree_TagService(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "oniontree"
-	tagName := "test"
+	tag := oniontree.Tag("test")
 
-	if err := ot.TagService(serviceID, []string{tagName}); err != nil {
+	if err := ot.TagService(serviceID, []oniontree.Tag{tag}); err != nil {
 		t.Fatal(err)
 	}
 
-	if !assert.FileExists(t, ot.TaggedDir()+"/"+tagName+"/oniontree.yaml") {
-		t.Fatalf("file '/%s/oniontree.yaml' not exists", tagName)
+	if !assert.FileExists(t, ot.TaggedDir()+"/"+tag.String()+"/oniontree.yaml") {
+		t.Fatalf("file '/%s/oniontree.yaml' not exists", tag)
+	}
+}
+
+func TestOnionTree_TagServiceErrorInvalidTagName(t *testing.T) {
+	ot, cleanup := copyOnionTree(t)
+	defer cleanup()
+
+	serviceID := "oniontree"
+	tag := oniontree.Tag("bad_tag")
+
+	err := ot.TagService(serviceID, []oniontree.Tag{tag})
+	if _, ok := err.(*oniontree.ErrInvalidTagName); !ok {
+		if err == nil {
+			t.Fatal("service tagged even though tag name is invalid")
+		} else {
+			t.Fatal("unexpected error", err.Error())
+		}
 	}
 }
 
@@ -397,13 +414,13 @@ func TestOnionTree_UntagService(t *testing.T) {
 	defer cleanup()
 
 	serviceID := "oniontree"
-	tagName := "link_list"
+	tag := oniontree.Tag("link_list")
 
-	if err := ot.UntagService(serviceID, []string{tagName}); err != nil {
+	if err := ot.UntagService(serviceID, []oniontree.Tag{tag}); err != nil {
 		t.Fatal(err)
 	}
 
-	if !assert.NoFileExists(t, ot.TaggedDir()+"/"+tagName+"/oniontree.yaml") {
-		t.Fatalf("file '/%s/oniontree.yaml' exists", tagName)
+	if !assert.NoFileExists(t, ot.TaggedDir()+"/"+tag.String()+"/oniontree.yaml") {
+		t.Fatalf("file '/%s/oniontree.yaml' exists", tag)
 	}
 }

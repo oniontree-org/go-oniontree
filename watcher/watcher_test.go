@@ -60,7 +60,7 @@ func mustAddService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan Event)
 func mustTagService(t *testing.T, ot *oniontree.OnionTree, eventCh <-chan Event) {
 	serviceID := "testservice"
 	tagName := "test"
-	if err := ot.TagService(serviceID, []string{tagName}); err != nil {
+	if err := ot.TagService(serviceID, []oniontree.Tag{oniontree.Tag(tagName)}); err != nil {
 		t.Fatal(err)
 	}
 
