@@ -7,9 +7,13 @@ import (
 	"strings"
 )
 
-type ID string
+type serviceID string
 
-func (i ID) Validate() error {
+func (i serviceID) String() string {
+	return string(i)
+}
+
+func (i serviceID) Validate() error {
 	pattern := `^[a-z0-9\-]+$`
 	matched, err := regexp.MatchString(pattern, string(i))
 	if err != nil {
@@ -27,7 +31,7 @@ type Service struct {
 	URLs        []string     `json:"urls" yaml:"urls"`
 	PublicKeys  []*PublicKey `json:"public_keys,omitempty" yaml:"public_keys,omitempty"`
 
-	id        ID
+	id        serviceID
 	validator *validator.Validator
 }
 
@@ -101,7 +105,7 @@ func (s *Service) Validate() error {
 
 func NewService(id string) *Service {
 	return &Service{
-		id:        ID(id),
+		id:        serviceID(id),
 		validator: validator.NewValidator(jsonschema.V0),
 	}
 }
