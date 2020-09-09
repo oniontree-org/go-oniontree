@@ -1,7 +1,6 @@
 package oniontree
 
 import (
-	"errors"
 	"fmt"
 	"github.com/go-yaml/yaml"
 	"io"
@@ -14,13 +13,6 @@ import (
 
 const (
 	cairnName string = ".oniontree"
-)
-
-var (
-	ErrNotOnionTree = errors.New("not an oniontree repository")
-	ErrIdExists     = errors.New("id exists")
-	ErrIdNotExists  = errors.New("id not exists")
-	ErrTagNotExists = errors.New("tag not exists")
 )
 
 type OnionTree struct {
@@ -52,7 +44,7 @@ func (o OnionTree) AddService(s *Service) error {
 	file, err := os.OpenFile(pth, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0666)
 	if err != nil {
 		if os.IsExist(err) {
-			return ErrIdExists
+			return &ErrIdExists{s.ID()}
 		}
 		return err
 	}
@@ -79,7 +71,7 @@ func (o OnionTree) RemoveService(id string) error {
 	pth := path.Join(o.UnsortedDir(), o.idToFilename(id))
 	if err := os.Remove(pth); err != nil {
 		if os.IsNotExist(err) {
-			return ErrIdNotExists
+			return &ErrIdNotExists{id}
 		}
 		return err
 	}
@@ -95,7 +87,7 @@ func (o OnionTree) UpdateService(s *Service) error {
 	file, err := os.OpenFile(pth, os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return ErrIdNotExists
+			return &ErrIdNotExists{s.ID()}
 		}
 		return err
 	}
@@ -129,7 +121,7 @@ func (o OnionTree) GetServiceBytes(id string) ([]byte, error) {
 	file, err := os.Open(pth)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, ErrIdNotExists
+			return nil, &ErrIdNotExists{id}
 		}
 		return nil, err
 	}
@@ -173,7 +165,7 @@ func (o OnionTree) ListServicesWithTag(id string) ([]string, error) {
 	file, err := os.Open(pth)
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, ErrTagNotExists
+			return nil, &ErrTagNotExists{id}
 		}
 		return nil, err
 	}
@@ -235,7 +227,7 @@ func (o OnionTree) TagService(id string, tags []string) error {
 		filename := o.idToFilename(id)
 		pth := path.Join(o.UnsortedDir(), filename)
 		if !isFile(pth) {
-			return ErrIdNotExists
+			return &ErrIdNotExists{id}
 		}
 		pthTag := path.Join(o.TaggedDir(), tag)
 		// Create tag directory, ignore error if it already exists.
@@ -265,7 +257,7 @@ func (o OnionTree) UntagService(id string, tags []string) error {
 		filename := o.idToFilename(id)
 		pth := path.Join(o.UnsortedDir(), filename)
 		if !isFile(pth) {
-			return ErrIdNotExists
+			return &ErrIdNotExists{id}
 		}
 		pthTag := path.Join(o.TaggedDir(), tag)
 		pthLink := path.Join(pthTag, filename)
@@ -329,7 +321,7 @@ func (o OnionTree) findRootDir(dir string) (string, error) {
 	for i := 0; i < maxDepth; i++ {
 		// TODO: It would be better to return an error from isDir (if there'd be one).
 		if !isDir(dir) {
-			return "", ErrNotOnionTree
+			return "", &ErrNotOnionTree{dir}
 		}
 
 		pth := path.Join(dir, cairnName)
@@ -340,7 +332,7 @@ func (o OnionTree) findRootDir(dir string) (string, error) {
 
 		dir = path.Join(dir, "..")
 	}
-	return "", ErrNotOnionTree
+	return "", &ErrNotOnionTree{dir}
 }
 
 // New returns initialized OnionTree structure. The function

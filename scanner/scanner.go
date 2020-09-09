@@ -65,7 +65,7 @@ func (m *Scanner) Start(ctx context.Context, dir string, outputCh chan<- Event) 
 
 		deadServiceIDs, err := m.ot.ListServicesWithTag("dead")
 		if err != nil {
-			if err != oniontree.ErrTagNotExists {
+			if _, ok := err.(*oniontree.ErrTagNotExists); !ok {
 				return nil, err
 			}
 			return procs, nil

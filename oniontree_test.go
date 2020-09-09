@@ -101,7 +101,8 @@ func TestOnionTree_AddServiceErrorExists(t *testing.T) {
 
 	serviceData := oniontree.NewService("oniontree")
 
-	if err := ot.AddService(serviceData); err != oniontree.ErrIdExists {
+	err := ot.AddService(serviceData)
+	if _, ok := err.(*oniontree.ErrIdExists); !ok {
 		t.Fatal("service added even though it already existed")
 	}
 }
@@ -120,7 +121,8 @@ func TestOnionTree_AddServiceErrorInvalidID(t *testing.T) {
 	for _, id := range invalidIDs {
 		serviceData := oniontree.NewService(id)
 
-		if err := ot.AddService(serviceData); err != oniontree.ErrInvalidID {
+		err := ot.AddService(serviceData)
+		if _, ok := err.(*oniontree.ErrInvalidID); !ok {
 			t.Fatal("service added even though its ID is invalid")
 		}
 	}
@@ -171,8 +173,9 @@ func TestOnionTree_UpdateServiceErrorNotExists(t *testing.T) {
 
 	serviceData := oniontree.NewService("dummyservice")
 
-	if err := ot.UpdateService(serviceData); err != oniontree.ErrIdNotExists {
-		t.Fatal(err)
+	err := ot.UpdateService(serviceData)
+	if e, ok := err.(*oniontree.ErrIdNotExists); !ok {
+		t.Fatal(e)
 	}
 }
 

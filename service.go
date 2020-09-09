@@ -1,23 +1,21 @@
 package oniontree
 
 import (
-	"errors"
 	"github.com/onionltd/go-oniontree/validator"
 	"regexp"
 	"strings"
 )
 
-var ErrInvalidID = errors.New("invalid id")
-
 type ID string
 
 func (i ID) Validate() error {
-	matched, err := regexp.MatchString(`^[a-z0-9\-]+$`, string(i))
+	pattern := `^[a-z0-9\-]+$`
+	matched, err := regexp.MatchString(pattern, string(i))
 	if err != nil {
 		return err
 	}
 	if !matched {
-		return ErrInvalidID
+		return &ErrInvalidID{string(i), pattern}
 	}
 	return nil
 }
