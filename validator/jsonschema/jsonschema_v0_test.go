@@ -1,9 +1,9 @@
 package jsonschema_test
 
 import (
-	"github.com/onionltd/go-oniontree"
-	"github.com/onionltd/go-oniontree/validator"
-	"github.com/onionltd/go-oniontree/validator/jsonschema"
+	"github.com/oniontree-org/go-oniontree"
+	"github.com/oniontree-org/go-oniontree/validator"
+	"github.com/oniontree-org/go-oniontree/validator/jsonschema"
 	"testing"
 )
 

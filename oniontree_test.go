@@ -2,7 +2,7 @@ package oniontree_test
 
 import (
 	"github.com/go-yaml/yaml"
-	"github.com/onionltd/go-oniontree"
+	"github.com/oniontree-org/go-oniontree"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"

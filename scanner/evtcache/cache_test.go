@@ -2,8 +2,8 @@ package evtcache_test
 
 import (
 	"context"
-	"github.com/onionltd/go-oniontree/scanner"
-	"github.com/onionltd/go-oniontree/scanner/evtcache"
+	"github.com/oniontree-org/go-oniontree/scanner"
+	"github.com/oniontree-org/go-oniontree/scanner/evtcache"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"

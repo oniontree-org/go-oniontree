@@ -3,7 +3,7 @@ package watcher
 import (
 	"context"
 	"fmt"
-	"github.com/onionltd/go-oniontree"
+	"github.com/oniontree-org/go-oniontree"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"

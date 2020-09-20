@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/go-yaml/yaml"
-	"github.com/onionltd/go-oniontree"
+	"github.com/oniontree-org/go-oniontree"
 	"github.com/urfave/cli/v2"
 	"io/ioutil"
 )

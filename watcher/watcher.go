@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
-	"github.com/onionltd/go-oniontree"
+	"github.com/oniontree-org/go-oniontree"
 	"path"
 	"path/filepath"
 	"strings"

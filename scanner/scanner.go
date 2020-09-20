@@ -3,8 +3,8 @@ package scanner
 import (
 	"context"
 	"fmt"
-	"github.com/onionltd/go-oniontree"
-	"github.com/onionltd/go-oniontree/watcher"
+	"github.com/oniontree-org/go-oniontree"
+	"github.com/oniontree-org/go-oniontree/watcher"
 	"golang.org/x/sync/semaphore"
 	"runtime/debug"
 )
