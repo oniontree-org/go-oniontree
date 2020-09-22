@@ -12,6 +12,7 @@ import (
 
 func TestCache_ReadEvents(t *testing.T) {
 	eventCh := make(chan scanner.Event)
+	eventCh2 := make(chan scanner.Event)
 	emitEvent := func(event scanner.Event) {
 		select {
 		case eventCh <- event:
@@ -24,10 +25,18 @@ func TestCache_ReadEvents(t *testing.T) {
 	defer cancel()
 
 	cache := &evtcache.Cache{}
-	exitCh := make(chan struct{})
+	cache2 := &evtcache.Cache{}
+	exitCh := make(chan struct{}, 2)
 
 	go func() {
-		if err := cache.ReadEvents(ctx, eventCh); err != nil {
+		if err := cache.ReadEvents(ctx, eventCh, eventCh2); err != nil {
+			log.Printf("%s\n", err)
+			return
+		}
+		exitCh <- struct{}{}
+	}()
+	go func() {
+		if err := cache2.ReadEvents(ctx, eventCh2, nil); err != nil {
 			log.Printf("%s\n", err)
 			return
 		}
@@ -43,230 +52,254 @@ func TestCache_ReadEvents(t *testing.T) {
 	//
 	// Bring the first address online
 	//
-	func() {
+	func(caches ...*evtcache.Cache) {
 		emitEvent(scanner.ScanEvent{
 			Status:    scanner.StatusOnline,
 			URL:       addresses[0],
 			ServiceID: serviceID,
 		})
-		addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+		for _, cache := range caches {
+			addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.Equal(t, map[string]scanner.Status{
-			addresses[0]: scanner.StatusOnline,
-		}, addrs) {
-			t.Fatal("invalid addresses returned")
-		}
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+			if !assert.Equal(t, map[string]scanner.Status{
+				addresses[0]: scanner.StatusOnline,
+			}, addrs) {
+				t.Fatal("invalid addresses returned")
+			}
 
-		if !assert.Equal(t, []string{addresses[0]}, onlineAddrs) {
-			t.Fatal("invalid online addresses returned")
-		}
+			onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		id, ok := cache.GetServiceID(addresses[0])
-		if !assert.True(t, ok) {
-			t.Fatal("url not found")
-		}
+			if !assert.Equal(t, []string{addresses[0]}, onlineAddrs) {
+				t.Fatal("invalid online addresses returned")
+			}
 
-		if !assert.Equal(t, serviceID, id) {
-			t.Fatal("invalid service id returned")
+			id, ok := cache.GetServiceID(addresses[0])
+			if !assert.True(t, ok) {
+				t.Fatal("url not found")
+			}
+
+			if !assert.Equal(t, serviceID, id) {
+				t.Fatal("invalid service id returned")
+			}
 		}
-	}()
+	}(cache, cache2)
 
 	//
 	// Bring the second address online
 	//
-	func() {
+	func(caches ...*evtcache.Cache) {
 		emitEvent(scanner.ScanEvent{
 			Status:    scanner.StatusOnline,
 			URL:       addresses[1],
 			ServiceID: serviceID,
 		})
-		addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+		for _, cache := range caches {
+			addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.Equal(t, map[string]scanner.Status{
-			addresses[0]: scanner.StatusOnline,
-			addresses[1]: scanner.StatusOnline,
-		}, addrs) {
-			t.Fatal("invalid addresses returned")
-		}
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+			if !assert.Equal(t, map[string]scanner.Status{
+				addresses[0]: scanner.StatusOnline,
+				addresses[1]: scanner.StatusOnline,
+			}, addrs) {
+				t.Fatal("invalid addresses returned")
+			}
 
-		if !assert.Equal(t, []string{addresses[0], addresses[1]}, onlineAddrs) {
-			t.Fatal("invalid online addresses returned")
-		}
+			onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		id, ok := cache.GetServiceID(addresses[1])
-		if !assert.True(t, ok) {
-			t.Fatal("url not found")
-		}
+			if !assert.ElementsMatch(t, []string{addresses[0], addresses[1]}, onlineAddrs) {
+				t.Fatal("invalid online addresses returned")
+			}
 
-		if !assert.Equal(t, serviceID, id) {
-			t.Fatal("invalid service id returned")
+			id, ok := cache.GetServiceID(addresses[1])
+			if !assert.True(t, ok) {
+				t.Fatal("url not found")
+			}
+
+			if !assert.Equal(t, serviceID, id) {
+				t.Fatal("invalid service id returned")
+			}
 		}
-	}()
+	}(cache, cache2)
 
 	//
 	// Bring the first address offline
 	//
-	func() {
+	func(caches ...*evtcache.Cache) {
 		emitEvent(scanner.ScanEvent{
 			Status:    scanner.StatusOffline,
 			URL:       addresses[0],
 			ServiceID: serviceID,
 		})
-		addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+		for _, cache := range caches {
+			addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.Equal(t, map[string]scanner.Status{
-			addresses[0]: scanner.StatusOffline,
-			addresses[1]: scanner.StatusOnline,
-		}, addrs) {
-			t.Fatal("invalid addresses returned")
-		}
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+			if !assert.Equal(t, map[string]scanner.Status{
+				addresses[0]: scanner.StatusOffline,
+				addresses[1]: scanner.StatusOnline,
+			}, addrs) {
+				t.Fatal("invalid addresses returned")
+			}
 
-		if !assert.Equal(t, []string{addresses[1]}, onlineAddrs) {
-			t.Fatal("invalid online addresses returned")
-		}
+			onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		id, ok := cache.GetServiceID(addresses[0])
-		if !assert.True(t, ok) {
-			t.Fatal("url not found")
-		}
+			if !assert.Equal(t, []string{addresses[1]}, onlineAddrs) {
+				t.Fatal("invalid online addresses returned")
+			}
 
-		if !assert.Equal(t, serviceID, id) {
-			t.Fatal("invalid service id returned")
+			id, ok := cache.GetServiceID(addresses[0])
+			if !assert.True(t, ok) {
+				t.Fatal("url not found")
+			}
+
+			if !assert.Equal(t, serviceID, id) {
+				t.Fatal("invalid service id returned")
+			}
 		}
-	}()
+	}(cache, cache2)
 
 	//
 	// Bring the second address offline
 	//
-	func() {
+	func(caches ...*evtcache.Cache) {
 		emitEvent(scanner.ScanEvent{
 			Status:    scanner.StatusOffline,
 			URL:       addresses[1],
 			ServiceID: serviceID,
 		})
-		addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+		for _, cache := range caches {
+			addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.Equal(t, map[string]scanner.Status{
-			addresses[0]: scanner.StatusOffline,
-			addresses[1]: scanner.StatusOffline,
-		}, addrs) {
-			t.Fatal("invalid addresses returned")
-		}
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+			if !assert.Equal(t, map[string]scanner.Status{
+				addresses[0]: scanner.StatusOffline,
+				addresses[1]: scanner.StatusOffline,
+			}, addrs) {
+				t.Fatal("invalid addresses returned")
+			}
 
-		if !assert.Equal(t, []string{}, onlineAddrs) {
-			t.Fatal("invalid online addresses returned")
-		}
+			onlineAddrs, ok := cache.GetOnlineAddresses(serviceID)
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		id, ok := cache.GetServiceID(addresses[1])
-		if !assert.True(t, ok) {
-			t.Fatal("url not found")
-		}
+			if !assert.Equal(t, []string{}, onlineAddrs) {
+				t.Fatal("invalid online addresses returned")
+			}
 
-		if !assert.Equal(t, serviceID, id) {
-			t.Fatal("invalid service id returned")
+			id, ok := cache.GetServiceID(addresses[1])
+			if !assert.True(t, ok) {
+				t.Fatal("url not found")
+			}
+
+			if !assert.Equal(t, serviceID, id) {
+				t.Fatal("invalid service id returned")
+			}
 		}
-	}()
+	}(cache, cache2)
 
 	//
 	// Send WorkerStopped event, this should remove the first address from the map.
 	//
-	func() {
+	func(caches ...*evtcache.Cache) {
 		emitEvent(scanner.WorkerStopped{
 			URL:       addresses[0],
 			ServiceID: serviceID,
 		})
-		addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+		for _, cache := range caches {
+			addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.Equal(t, map[string]scanner.Status{
-			addresses[1]: scanner.StatusOffline,
-		}, addrs) {
-			t.Fatal("invalid addresses returned")
-		}
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		_, ok = cache.GetServiceID(addresses[0])
-		if !assert.False(t, ok) {
-			t.Fatal("url found, but it should not")
+			if !assert.Equal(t, map[string]scanner.Status{
+				addresses[1]: scanner.StatusOffline,
+			}, addrs) {
+				t.Fatal("invalid addresses returned")
+			}
+
+			_, ok = cache.GetServiceID(addresses[0])
+			if !assert.False(t, ok) {
+				t.Fatal("url found, but it should not")
+			}
 		}
-	}()
+	}(cache, cache2)
 
 	//
 	// Send WorkerStopped event, this should remove the second address from the map.
 	//
-	func() {
+	func(caches ...*evtcache.Cache) {
 		emitEvent(scanner.WorkerStopped{
 			URL:       addresses[1],
 			ServiceID: serviceID,
 		})
-		addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.True(t, ok) {
-			t.Fatal("service ID not found")
-		}
+		for _, cache := range caches {
+			addrs, ok := cache.GetAddresses(serviceID)
 
-		if !assert.Equal(t, map[string]scanner.Status{}, addrs) {
-			t.Fatal("invalid addresses returned")
-		}
+			if !assert.True(t, ok) {
+				t.Fatal("service ID not found")
+			}
 
-		_, ok = cache.GetServiceID(addresses[1])
-		if !assert.False(t, ok) {
-			t.Fatal("url found, but it should not")
+			if !assert.Equal(t, map[string]scanner.Status{}, addrs) {
+				t.Fatal("invalid addresses returned")
+			}
+
+			_, ok = cache.GetServiceID(addresses[1])
+			if !assert.False(t, ok) {
+				t.Fatal("url found, but it should not")
+			}
 		}
-	}()
+	}(cache, cache2)
 
 	//
 	// Send ProcessStopped event, this should remove the service ID from the map.
 	//
-	func() {
+	func(caches ...*evtcache.Cache) {
 		emitEvent(scanner.ProcessStopped{
 			ServiceID: serviceID,
 		})
-		_, ok := cache.GetAddresses(serviceID)
 
-		if !assert.False(t, ok) {
-			t.Fatal("service ID found, but it should not")
+		for _, cache := range caches {
+			_, ok := cache.GetAddresses(serviceID)
+
+			if !assert.False(t, ok) {
+				t.Fatal("service ID found, but it should not")
+			}
 		}
-	}()
+	}(cache, cache2)
 
 	close(eventCh)
-	<-exitCh
+
+	for i := 0; i < cap(exitCh); i++ {
+		<-exitCh
+	}
 }
