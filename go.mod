@@ -4,10 +4,10 @@ go 1.14
 
 require (
 	github.com/cpuguy83/go-md2man/v2 v2.0.0 // indirect
-	github.com/dnesting/client_golang v0.0.0-20151026012706-449ccefff16c
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/otiai10/copy v1.2.0
+	github.com/prometheus/client_golang v1.7.1
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.13.0 // indirect
 	github.com/stretchr/testify v1.6.1

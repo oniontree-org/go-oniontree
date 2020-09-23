@@ -2,8 +2,8 @@ package evtmetrics
 
 import (
 	"context"
-	"github.com/dnesting/client_golang/prometheus"
 	"github.com/oniontree-org/go-oniontree/scanner"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Metrics struct {
