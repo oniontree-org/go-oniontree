@@ -51,6 +51,14 @@ func (m *Metrics) ReadEvents(ctx context.Context, inputCh <-chan scanner.Event, 
 	}
 }
 
+func (m *Metrics) Describe(ch chan<- *prometheus.Desc) {
+	m.gauge.Describe(ch)
+}
+
+func (m *Metrics) Collect(ch chan<- prometheus.Metric) {
+	m.gauge.Collect(ch)
+}
+
 func (m *Metrics) Get() *prometheus.GaugeVec {
 	return m.gauge
 }
