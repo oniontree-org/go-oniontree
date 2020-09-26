@@ -25,8 +25,8 @@ func TestMetrics_ReadEvents(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	metrics := &evtmetrics.Metrics{}
-	metrics2 := &evtmetrics.Metrics{}
+	metrics := evtmetrics.New()
+	metrics2 := evtmetrics.New()
 	exitCh := make(chan struct{}, 2)
 
 	go func() {

@@ -17,14 +17,6 @@ func (m *Metrics) ReadEvents(ctx context.Context, inputCh <-chan scanner.Event, 
 		}
 	}()
 
-	m.gauge = prometheus.NewGaugeVec(
-		prometheus.GaugeOpts{
-			Name: "scanner_event_info",
-			Help: "Scanner events.",
-		},
-		[]string{"service_id", "url", "directory"},
-	)
-
 	for {
 		select {
 		case event, more := <-inputCh:
@@ -61,4 +53,16 @@ func (m *Metrics) Collect(ch chan<- prometheus.Metric) {
 
 func (m *Metrics) Get() *prometheus.GaugeVec {
 	return m.gauge
+}
+
+func New() *Metrics {
+	return &Metrics{
+		gauge: prometheus.NewGaugeVec(
+			prometheus.GaugeOpts{
+				Name: "scanner_event_info",
+				Help: "Scanner events.",
+			},
+			[]string{"service_id", "url", "directory"},
+		),
+	}
 }
