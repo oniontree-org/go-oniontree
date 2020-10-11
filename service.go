@@ -26,10 +26,10 @@ func (i serviceID) Validate() error {
 }
 
 type Service struct {
-	Name        string       `json:"name" yaml:"name"`
-	Description string       `json:"description,omitempty" yaml:"description,omitempty"`
-	URLs        []string     `json:"urls" yaml:"urls"`
-	PublicKeys  []*PublicKey `json:"public_keys,omitempty" yaml:"public_keys,omitempty"`
+	Name        string     `json:"name" yaml:"name"`
+	Description string     `json:"description,omitempty" yaml:"description,omitempty"`
+	URLs        []string   `json:"urls" yaml:"urls"`
+	PublicKeys  PublicKeys `json:"public_keys,omitempty" yaml:"public_keys,omitempty"`
 
 	id        serviceID
 	validator *validator.Validator

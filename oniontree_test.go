@@ -1,10 +1,13 @@
 package oniontree_test
 
 import (
+	"bytes"
 	"github.com/go-yaml/yaml"
 	"github.com/oniontree-org/go-oniontree"
 	"github.com/otiai10/copy"
 	"github.com/stretchr/testify/assert"
+	"golang.org/x/crypto/openpgp"
+	"golang.org/x/crypto/openpgp/clearsign"
 	"io/ioutil"
 	"os"
 	"testing"
@@ -422,5 +425,48 @@ func TestOnionTree_UntagService(t *testing.T) {
 
 	if !assert.NoFileExists(t, ot.TaggedDir()+"/"+tag.String()+"/oniontree.yaml") {
 		t.Fatalf("file '/%s/oniontree.yaml' exists", tag)
+	}
+}
+
+func TestOnionTree_VerifySignedMessage(t *testing.T) {
+	ot, cleanup := copyOnionTree(t)
+	defer cleanup()
+
+	serviceID := "oniontree"
+	signedText := `-----BEGIN PGP SIGNED MESSAGE-----
+Hash: SHA512
+
+http://onions53ehmf4q75.onion
+https://oniontree.org
+-----BEGIN PGP SIGNATURE-----
+
+iQIzBAEBCgAdFiEE8B/tR5eVVMktn1ay5LbKxJskKkQFAl3mwUoACgkQ5LbKxJsk
+KkS7kw/+KYFiTv7Z0vAxU07tSdEE/w5JGCnhBKHwgoxuM0fa09bknDMyLPLi9nIz
+HnJu8+f5+yktbsObX4Hr8jCs8NK9LKBc75uORmlqcilzmPTHQ0suBnURsP8+iPLi
+qsDB5kkLzEX1lLfVaSWyIMy8UfXyWeJvDWagQUfP3w6kTS3NvjobIcS5ZyEApzxn
+/d9wyEhI1uKp0ai5koLMTHQQu02pIFiykH0n8OiroAjgPZpb1HzQvj/3Ylny4Yey
+qRsxSWX0YueGLUMuCrAEjBemooguoEuN8bCjvWpN+rqO0TBWr9KWRFdDw9q42mR7
+ju/myQUlKnxNxD4VqhEcczz7BeqxnB60SGd1/IJvNDVEc0aNqt963A81r0DFhOaR
+Z1ItUYT4Jpd5xPtHWONmQdVr8Wa45g+XhHmGiTKVAwHA8vQLCOlnZji03ElVq5T+
+/Zjs+x2QnUvzut5ohjRpjaoxKk2dhc+D1gAuQ/xzyKT2679zrJkaUdIR0ycijbJ6
+togmI1x+j4a8qCPmmJNYGYicf7h618VmGMnWElKfCvBOWne8uIZyWTttivKCiR8j
+KFnmLRTsnTsoIJ1lDQ/xqXAPzUIu/TP0Omkjk5+UpofqBZEfzR9tPJFut0MMLXn1
+C9eumAqFSLZeMtTdG7LzXo1Iby2MnKjWowvifyhUOh3ohl0bLu8=
+=ETay
+-----END PGP SIGNATURE-----`
+
+	service, err := ot.GetService(serviceID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	block, _ := clearsign.Decode([]byte(signedText))
+	if block == nil {
+		t.Fatal("invalid clearsigned data")
+	}
+
+	_, err = openpgp.CheckDetachedSignature(service.PublicKeys, bytes.NewReader(block.Bytes), block.ArmoredSignature.Body)
+	if err != nil {
+		t.Fatal(err)
 	}
 }
