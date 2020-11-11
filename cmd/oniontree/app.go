@@ -78,6 +78,20 @@ func (a *Application) handleAddCommand() cli.ActionFunc {
 }
 
 func (a *Application) handleUpdateCommand() cli.ActionFunc {
+	readPublicKeyContent := func(pth string) (*oniontree.PublicKey, error) {
+		b, err := ioutil.ReadFile(pth)
+		if err != nil {
+			return nil, fmt.Errorf("failed to read public key content: %s", err)
+		}
+
+		publicKey, err := oniontree.NewPublicKey(b)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process public key content: %s", err)
+		}
+
+		return publicKey, nil
+	}
+
 	return func(c *cli.Context) error {
 		id := c.Args().First()
 		if id == "" {
@@ -102,41 +116,43 @@ func (a *Application) handleUpdateCommand() cli.ActionFunc {
 			changed = true
 		}
 
-		replace := c.Bool("replace")
+		urls := c.StringSlice("url")
 
-		addedURLs := 0
-		if replace {
-			addedURLs = service.SetURLs(c.StringSlice("url"))
-		} else {
-			addedURLs = service.AddURLs(c.StringSlice("url"))
-		}
-		if addedURLs > 0 {
-			changed = true
+		if len(urls) > 0 {
+			replace := c.Bool("replace")
+			addedURLs := 0
+			if replace {
+				addedURLs = service.SetURLs(urls)
+			} else {
+				addedURLs = service.AddURLs(urls)
+			}
+			if addedURLs > 0 {
+				changed = true
+			}
 		}
 
 		files := c.StringSlice("public-key")
-		publicKeys := make([]*oniontree.PublicKey, 0, len(files))
-		for i := range files {
-			b, err := ioutil.ReadFile(files[i])
-			if err != nil {
-				return fmt.Errorf("failed to read public key content: %s", err)
+
+		if len(files) > 0 {
+			publicKeys := make([]*oniontree.PublicKey, 0, len(files))
+			for i := range files {
+				publicKey, err := readPublicKeyContent(files[i])
+				if err != nil {
+					return err
+				}
+				publicKeys = append(publicKeys, publicKey)
 			}
 
-			publicKey, err := oniontree.NewPublicKey(b)
-			if err != nil {
-				return fmt.Errorf("failed to process public key content: %s", err)
+			replace := c.Bool("replace")
+			addedPublicKeys := 0
+			if replace {
+				addedPublicKeys = service.SetPublicKeys(publicKeys)
+			} else {
+				addedPublicKeys = service.AddPublicKeys(publicKeys)
 			}
-
-			publicKeys = append(publicKeys, publicKey)
-		}
-		addedPublicKeys := 0
-		if replace {
-			addedPublicKeys = service.SetPublicKeys(publicKeys)
-		} else {
-			addedPublicKeys = service.AddPublicKeys(publicKeys)
-		}
-		if addedPublicKeys > 0 {
-			changed = true
+			if addedPublicKeys > 0 {
+				changed = true
+			}
 		}
 
 		if changed {
